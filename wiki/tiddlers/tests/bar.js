@@ -1,4 +1,4 @@
-describe('graph series', function() {
+describe('bar series', function() {
 
 beforeAll(function() {
 	$tw.test.startTestMode();
@@ -16,273 +16,32 @@ function testNodesEqualExceptCoords(adapter, expectedNodes) {
 	expect(data).toEqual(expectedNodes);
 };
 
-it('has simple options', function() {
-	const adapter = new $tw.test.GraphEngine({nodes: {A: {}}});
+it('can handle empty graph', function() {
+	const adapter = new $tw.test.GraphEngine({ graph: {type: "bar"}});
 	const options = adapter.testLast;
-	// There should not be axes by default
-	expect(options.xAxis).toBeUndefined();
-	expect(options.yAxis).toBeUndefined();
-});
-
-it('handles zoom by not handling it', function() {
-	const adapter = new $tw.test.GraphEngine({nodes: {A: {}}});
-	// zooming, or as echarts calls it, roaming, is always enabled in graphs
-	expect(adapter.testLast.series[0].roam).toBe(true);
-	// It must be global, or dragging and zooming is a pain.
-	expect(adapter.testLast.series[0].roamTrigger).toBe("global");
-	// disable zooming
-	adapter.update({graph: {zoom: false}});
-	// Nothing should have changed, because we handle zoom toggling at
-	// a DOM level, not at an echarts level.
-	expect(adapter.testLast.series[0].roam).toBe(true);
-	expect(adapter.testLast.series[0].roamTrigger).toBe("global");
-});
-
-it('can manipulate properties of node physics', function() {
-	const adapter = new $tw.test.GraphEngine({graph: {
-		repulsion: 7,
-		edgeLength: 7,
-		gravity: 0.7,
-		friction: 0.7}});
-	var series = adapter.testLast.series[0].force;
-	expect(series.repulsion).toBe(7);
-	expect(series.edgeLength).toBe(7);
-	expect(series.gravity).toBe(0.7);
-	expect(series.friction).toBe(0.7);
-	adapter.update({graph: {}});
-	series = adapter.testLast.series[0].force;
-	// Values taken from echarts documentation
-	expect(series.repulsion).toBe(50);
-	expect(series.edgeLength).toBe(30);
-	expect(series.gravity).toBe(0.1);
-	expect(series.friction).toBe(0.6);
+	expect(options.series[0].data).toEqual([]);
+	// Even if not specified, bar graphs need SOMETHING for axes, or it
+	// fails to render anything.
+	expect(options.xAxis).not.toBeUndefined();
+	expect(options.yAxis).not.toBeUndefined();
 });
 
 it('can manipulate node labels', function() {
-	const adapter = new $tw.test.GraphEngine({ nodes: {
-		match: {label: "match"},
-		copy: {label: "match"},
-		blank: {}}});
-	testNodesEqualExceptCoords(adapter, [
-		{id: "match", name: "match", label: {show: true, position: "bottom"}},
-		{id: "copy", name: "match", label: {show: true, position: "bottom"}},
-		{id: "blank"}]);
-	adapter.update({ nodes: {
-		match: {},
-		blank: {label: "new"}}});
-	testNodesEqualExceptCoords(adapter, [
-		{id: "match"},
-		{id: "copy", name: "match", label: {show: true, position: "bottom"}},
-		{id: "blank", name: "new", label: {show: true, position: "bottom"}}]);
-});
-
-it('can manipulate node shapes', function() {
-	const adapter = new $tw.test.GraphEngine({ nodes: {
-		unspecified: {},
-		circle: {shape: "circle"},
-		square: {shape: "square"},
-		rounded: {shape: "rounded"},
-		no: {shape: "no"},
-		nonexistent: {shape: "nonexistent"}}});
-	testNodesEqualExceptCoords(adapter, [
-		{id: "unspecified"},
-		{id: "circle", symbol: "circle"},
-		{id: "square", symbol: "rect"},
-		{id: "rounded", symbol: "roundRect"},
-		{id: "no", symbol: "none"},
-		{id: "nonexistent"}]);
-	// Now to change some of the shapes
-	adapter.update({ nodes: {
-		circle: {shape: "triangle"},           // change
-		square: {shape: "notAChoice"},         // set to non-choice
-		nonexistent: {shape: "arrow"}}}); // set
-	testNodesEqualExceptCoords(adapter, [
-		{id: "unspecified"},
-		{id: "circle", symbol: "triangle"},
-		{id: "square"},
-		{id: "rounded", symbol: "roundRect"},
-		{id: "no", symbol: "none"},
-		{id: "nonexistent", symbol: "arrow"}]);
-});
-
-it('can manipulate node size', function() {
-	const adapter = new $tw.test.GraphEngine({nodes: {
-		auto: {},
-		zero: {size: 0},
-		manual: {size: 40}}});
-	testNodesEqualExceptCoords(adapter, [
-		{id: "auto"},
-		{id: "zero", symbolSize: 0},
-		{id: "manual", symbolSize: 40}]);
-});
-
-it('can manipulate node color', function() {
-	const adapter = new $tw.test.GraphEngine({nodes: {
-		auto: {},
-		manual: {color: "#bb0000"}}});
-	testNodesEqualExceptCoords(adapter, [
-		{id: "auto"},
-		{id: "manual", itemStyle: {color: "#bb0000"}}]);
-});
-
-it('can manipulate node image', function() {
-	var imageTiddler = "$:/plugins/Gk0Wk/echarts/icon";
-	var parser = $tw.wiki.parseTiddler(imageTiddler);
-	embeddedUrl = parser.tree[0].attributes.src.value;
-	const adapter = new $tw.test.GraphEngine({nodes: {
-		image: {image: embeddedUrl},
-		shape: {shape: "arrow"},
-		// When mixed, image takes priority
-		mixed: {shape: "arrow", image: embeddedUrl}}});
-	testNodesEqualExceptCoords(adapter, [
-		{id: "image", symbol: "image://" + embeddedUrl},
-		{id: "shape", symbol: "arrow"},
-		{id: "mixed", symbol: "image://" + embeddedUrl}]);
-	// Let's make sure changing things works correctly
-	adapter.update({nodes: {
-		image: {image: embeddedUrl, shape: "triangle"},
-		mixed: {shape: "triangle"}}});
-	testNodesEqualExceptCoords(adapter, [
-		{id: "image", symbol: "image://" + embeddedUrl},
-		{id: "shape", symbol: "arrow"},
-		{id: "mixed", symbol: "triangle"}]);
-});
-
-it('can manipulate node physics', function() {
-	const adapter = new $tw.test.GraphEngine({nodes: {
-		yes: {physics: true},
-		no: {physics: false},
-		unspecified: {}}});
-	var data = adapter.testLast.series[0].data;
-	expect(data.length).toBe(3);
-	expect(data[0].fixed).toBe(false);
-	expect(data[1].fixed).toBe(true);
-	expect(data[2].fixed).toBeUndefined();
-	// Update physics
-	adapter.update({nodes: {
-		yes: {},
-		// "no" is untouched
-		unspecified: {physics: false}}});
-	data = adapter.testLast.series[0].data;
-	// Testing individually, because the x's and y's will be set
-	// to manipulate the viewport. We don't care in this test.
-	expect(data.length).toBe(3);
-	expect(data[0].fixed).toBeUndefined();
-	expect(data[1].fixed).toBe(true);
-	expect(data[2].fixed).toBe(true);
-});
-
-/*** Edges ***/
-
-// The only way to remove edges from an eCharts graph is to either do
-// a "notMerge" or a "replaceMerge", both of which require fully
-// resubmitting the edge list.
-it('can add and remove edges', function() {
-	const adapter = new $tw.test.GraphEngine({
-		nodes: {A: {}, B: {}, C:{}},
-		edges: {AB: {from: "A", to: "B"}, AC: {from: "A", to: "C"}}});
-	// Let's add an edge
-	adapter.update({edges: {AC2: {from: "A", to: "C"}}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B"},
-		{source: "A", target: "C"},
-		{source: "A", target: "C"}]);
-	// Now let's remove an edge
-	adapter.update({edges: {AC: null}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B"},
-		{source: "A", target: "C"}]);
-});
-
-it('can manipulate edge labels', function() {
-	const adapter = new $tw.test.GraphEngine({
-		nodes: {A: {}, B: {}, C: {}},
-		edges: {AB: {from: "A", to: "B", label: "labeled"},
-			AC: {from: "A", to: "C", label: "labeled"},
-			BC: {from: "A", to: "B"}}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B", id: "labeled", label: {show: true}},
-		{source: "A", target: "C", id: "labeled", label: {show: true}},
-		{source: "A", target: "B"}]);
-});
-
-it('can manipulate edge color', function() {
-	const adapter = new $tw.test.GraphEngine({
-		nodes: {A: {}, B: {}},
-		edges: {AB: {from: "A", to: "B", color: "#ff0000"}}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B", lineStyle: {color: "#ff0000"}}]);
-});
-
-it('can manipulate edge width', function() {
-	const adapter = new $tw.test.GraphEngine({
-		nodes: {A: {}, B: {}},
-		edges: {
-			empty: {from: "A", to: "B"},
-			set: {from: "A", to: "B", width: 4}}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B"},
-		{source: "A", target: "B", lineStyle: {width: 4}}]);
-});
-
-it('can manipulate edge stroke', function() {
-	const adapter = new $tw.test.GraphEngine({
-		nodes: {A: {}, B: {}},
-		edges: {
-			dashed: {from: "A", to: "B", stroke: "dashed"},
-			dotted: {from: "A", to: "B", stroke: "dotted"},
-			empty: {from: "A", to: "B"},
-			solid: {from: "A", to: "B", stroke: "solid"}}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B", lineStyle: {type: "dashed"}},
-		{source: "A", target: "B", lineStyle: {type: "dotted"}},
-		{source: "A", target: "B"},
-		{source: "A", target: "B"}]);
-});
-
-it('can manipulate edge arrows', function() {
-	const adapter = new $tw.test.GraphEngine({
-		nodes: {A: {}, B: {}},
-		edges: {
-			from: {from: "A", to: "B", arrows: "from"},
-			empty: {from: "A", to: "B"},
-			no: {from: "A", to: "B", arrows: "no"},
-			to: {from: "A", to: "B", arrows: "to"}}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B", symbol: ["arrow", null]},
-		{source: "A", target: "B"},
-		{source: "A", target: "B"},
-		{source: "A", target: "B", symbol: [null, "arrow"]}]);
-});
-
-it('can manipulate edge roundness', function() {
-	const adapter = new $tw.test.GraphEngine({
-		nodes: {A: {}, B: {}},
-		edges: {
-			curved: {from: "A", to: "B", roundness: 1},
-			none: {from: "A", to: "B"},
-			straight: {from: "A", to: "B", roundness: 0}}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B", lineStyle: {curveness: 1}},
-		{source: "A", target: "B"},
-		{source: "A", target: "B"}]);
-});
-
-it('can manipulate edge physics', function() {
-	const adapter = new $tw.test.GraphEngine({
-		nodes: {A: {}, B: {}},
-		edges: {
-			empty: {from: "A", to: "B"},
-			no: {from: "A", to: "B", physics: false},
-			yes: {from: "A", to: "B", physics: true}}});
-	expect(adapter.testLast.series[0].links).toEqual([
-		{source: "A", target: "B"},
-		{source: "A", target: "B", ignoreForceLayout: true},
-		{source: "A", target: "B"}]);
+	const adapter = new $tw.test.GraphEngine({ graph: {type: "bar"},
+		nodes: {
+			A: {label: "match", value: 3},
+			B: {label: "match", value: 4},
+			C: {value: 2}}});
+	const data = adapter.testLast.series[0].data;
+	expect(data).toEqual([
+		{id: "A", value: 3, name: "match", label: {show: true, position: "bottom"}},
+		{id: "B", value: 4, name: "match", label: {show: true, position: "bottom"}},
+		{id: "C", value: 2}]);
 });
 
 /*** Events ***/
 
+/*
 class EChartsEvent {
 	constructor(type, alternates, mouseType) {
 		this.type = type;
@@ -568,5 +327,6 @@ it("does not support edge drag and free events", function() {
 	adapter.testEvent(makeEChartEvent("mouseup", "edge"));
 	expect(onevent).not.toHaveBeenCalled();
 });
+*/
 
 });

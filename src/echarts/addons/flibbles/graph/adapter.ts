@@ -15,6 +15,7 @@ export const name = "ECharts";
 
 export const properties = {
 	graph: {
+		type: {type: "enum", default: "graph", values: ["graph", "bar"]},
 		physics: {type: "boolean", default: false},
 			edgeLength: {type: "number", default: 30, min: 0, max: 100, parent: "physics"},
 			friction: {type: "number", default: 0.6, min: 0, max: 1, increment: 0.01, parent: "physics"},
@@ -28,6 +29,7 @@ export const properties = {
 	nodes: {
 		x: {type: "number"},
 		y: {type: "number"},
+		value: {type: "number"},
 		size: {type: "number", min: 0, max: 100, default: 10},
 		label: {type: "string"},
 		physics: {type: "boolean", default: true},
@@ -78,9 +80,6 @@ export function init(element: HTMLDivElement, objects: GraphObjects, options?) {
 	this.echarts = echarts;
 	this.zoom = true;
 	this.graph = Object.create(null);
-	var standardGraph = Object.create(Series.graph);
-	standardGraph.init(this.echarts);
-	this.series = [standardGraph];
 	this.window.addEventListener("resize", function() {
 		echarts.resize();
 	});
@@ -154,6 +153,11 @@ export function update(objects: GraphObjects) {
 	var updateSeries = true;
 	var graph = objects.graph;
 	if (graph) {
+		if (!this.series || this.series[0].name !== (graph.type || "graph")) {
+			var standardGraph = Object.create(Series[graph.type] || Series.graph);
+			standardGraph.init(this.echarts);
+			this.series = [standardGraph];
+		}
 		var count = 0;
 		// If there's more than 1 kind of graphObject, then we'll need
 		// to update the series
@@ -184,7 +188,7 @@ export function update(objects: GraphObjects) {
 	}
 	// We have changes that require updating the series.
 	if (updateSeries) {
-		const config = { };
+		const config = this.series[0].defaultConfig();
 		if (graph && graph.nodeColor) {
 			config.color = [
 				graph.nodeColor,

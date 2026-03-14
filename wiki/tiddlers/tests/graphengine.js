@@ -138,4 +138,13 @@ it('updates series when properties are removed', function() {
 	expect(setOption).toHaveBeenCalled();
 });
 
+/*** Graph type ***/
+
+it('maintains existing type when changing other graph details', function() {
+	const adapter = new $tw.test.GraphEngine({graph: {}, nodes: {A: {}}});
+	adapter.update({nodes: {B: {}}});
+	const reiteratedNodes = adapter.testLast.series[0].data.map(x => x.id);
+	expect(reiteratedNodes).toEqual(["A", "B"]);
+});
+
 });

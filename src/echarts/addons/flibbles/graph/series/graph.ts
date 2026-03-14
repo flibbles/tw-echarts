@@ -8,6 +8,10 @@ export function init(echarts): void {
 	this.echarts = echarts;
 };
 
+export function defaultConfig() {
+	return {};
+};
+
 export function update(objects: GraphObjects): void {
 	const series = {};
 	const graph = objects.graph;
