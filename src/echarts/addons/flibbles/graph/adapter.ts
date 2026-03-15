@@ -26,6 +26,9 @@ export const properties = {
 		focus: {type: "actions", nonECharts: true},
 		blur: {type: "actions", nonECharts: true}
 	},
+	axes: {
+		type: {type: "enum", values: ["value", "category", "time", "log"]}
+	},
 	nodes: {
 		x: {type: "number"},
 		y: {type: "number"},
@@ -188,7 +191,7 @@ export function update(objects: GraphObjects) {
 	}
 	// We have changes that require updating the series.
 	if (updateSeries) {
-		const config = this.series[0].defaultConfig();
+		const config = this.series[0].defaultConfig(objects.axes);
 		if (graph && graph.nodeColor) {
 			config.color = [
 				graph.nodeColor,

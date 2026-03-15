@@ -5,11 +5,16 @@ export function init(echarts): void {
 	this.data = Object.create(null);
 };
 
-export function defaultConfig() {
-	return {
-		xAxis: {},
-		yAxis: {}
-	};
+export function defaultConfig(axes) {
+	var objects = {xAxis: {}, yAxis: {}};
+	for (var id in axes) {
+		var axis = {};
+		if (axes[id].type) {
+			axis.type = axes[id].type;
+		}
+		objects[id + "Axis"] = axis;
+	}
+	return objects;
 };
 
 export function update(objects: GraphObjects): void {
