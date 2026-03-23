@@ -15,7 +15,7 @@ export const name = "ECharts";
 
 export const properties = {
 	graph: {
-		type: {type: "enum", default: "graph", values: ["graph", "bar"]},
+		type: {type: "enum", default: "graph", values: ["graph", "bar", "line"]},
 		physics: {type: "boolean", default: false},
 			edgeLength: {type: "number", default: 30, min: 0, max: 100, parent: "physics"},
 			friction: {type: "number", default: 0.6, min: 0, max: 1, increment: 0.01, parent: "physics"},
@@ -82,6 +82,7 @@ export function init(element: HTMLDivElement, objects: GraphObjects, options?) {
 	this.window = options.window || window;
 	this.echarts = echarts;
 	this.zoom = true;
+	this.objects = {};
 	this.graph = Object.create(null);
 	this.window.addEventListener("resize", function() {
 		echarts.resize();
@@ -189,9 +190,10 @@ export function update(objects: GraphObjects) {
 		}
 		this.zoom = graph.zoom !== false;
 	}
+	this.objects = merge(this.objects, objects);
 	// We have changes that require updating the series.
 	if (updateSeries) {
-		const config = this.series[0].defaultConfig(objects.axes);
+		const config = this.series[0].defaultConfig(this.objects.axes);
 		if (graph && graph.nodeColor) {
 			config.color = [
 				graph.nodeColor,
@@ -201,7 +203,7 @@ export function update(objects: GraphObjects) {
 		}
 		// Currently, there is only one type of series. We use it always.
 		// Ultimately, there will be other types.
-		config.series = this.series.map((series) => series.update(objects));
+		config.series = this.series.map((series) => series.update(this.objects));
 		this.echarts.setOption(config, false);
 		this.config = config;
 	}
@@ -220,6 +222,35 @@ export function destroy(): void {
 		this.echarts.dispose();
 		this.echarts = undefined;
 	}
+};
+
+function merge(existing, objects) {
+	for (var category in objects) {
+		var compiledSet;
+		if (category === "graph") {
+			compiledSet = objects.graph;
+		} else {
+			var oldSet = existing[category] || Object.create(null);
+			var newSet = objects[category];
+			for (var id in newSet) {
+				var update = newSet[id];
+				if (update !== null) {
+					update.id = id;
+					oldSet[id] = update;
+				} else { // Must be null, thus a deletion
+					oldSet[id] = undefined;
+				}
+			}
+			compiledSet = Object.create(null);
+			for (var id in oldSet) {
+				if (oldSet[id]) {
+					compiledSet[id] = oldSet[id];
+				}
+			}
+		}
+		existing[category] = compiledSet;
+	}
+	return existing;
 };
 
 export function handleEvent(event: Event) {

@@ -2,9 +2,6 @@ export const name = "graph";
 import { Shape2symbol } from '../utils.js';
 
 export function init(echarts): void {
-	this.data = Object.create(null);
-	this.links = Object.create(null);
-	this.backupLayout = Object.create(null);
 	this.echarts = echarts;
 };
 
@@ -38,7 +35,7 @@ export function update(objects: GraphObjects): void {
 		// of a hypothetical bounding-box around the nodes won't work.
 		series.roamTrigger = "global";
 	}
-	const data = createData(this.data, objects.nodes || {});
+	const data = createData(objects.nodes || {});
 	if (!this.boundingBox) {
 		this.boundingBox = getBoundingBox(data, this.echarts);
 	}
@@ -49,13 +46,13 @@ export function update(objects: GraphObjects): void {
 		series.data = data;
 	}
 	if (objects.edges) {
-		series.links = createLinks(this.links, objects.edges);
+		series.links = createLinks(objects.edges);
 	}
 	return series;
 };
 
-function createData(oldNodes, newNodes) {
-	return merge(oldNodes, newNodes || {})
+function createData(newNodes) {
+	return toArray(newNodes || {})
 		.sort((a,b) => a.x - b.x)
 		.map(function(n) {
 			var cleaned = { id: n.id };
@@ -88,8 +85,8 @@ function createData(oldNodes, newNodes) {
 		});
 };
 
-function createLinks(oldLinks: object, newLinks: object) {
-	var links = merge(oldLinks, newLinks);
+function createLinks(newLinks: object) {
+	var links = toArray(newLinks);
 	return links.map(function(l) {
 		const cleaned = {source: l.from, target: l.to};
 		if (l.label !== undefined) {
@@ -174,16 +171,7 @@ function startPosition(n, box, radius, count) {
 		Math.round(Math.sin(radian)*100*radius)/-100 + box.origin[1]];
 };
 
-function merge(entries, updates) {
-	for (var id in updates) {
-		var update = updates[id];
-		if (update) {
-			update.id = id;
-			entries[id] = update;
-		} else { // Must be null, thus a deletion
-			entries[id] = undefined;
-		}
-	}
+function toArray(entries) {
 	var output = [];
 	for (var id in entries) {
 		if (entries[id]) {

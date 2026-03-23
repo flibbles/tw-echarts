@@ -147,4 +147,17 @@ it('maintains existing type when changing other graph details', function() {
 	expect(reiteratedNodes).toEqual(["A", "B"]);
 });
 
+it('can change type', function() {
+	const adapter = new $tw.test.GraphEngine({
+		graph: {type: "bar"},
+		axes: {x: {type: "category"}},
+		nodes: {A: {}}});
+	adapter.update({graph: {type: "line"}});
+	const series = adapter.testLast.series[0];
+	expect(series.type).toBe("line");
+	const reiteratedNodes = series.data.map(x => x.id);
+	expect(reiteratedNodes).toEqual(["A"]);
+	expect(adapter.testLast.xAxis.type).toBe("category");
+});
+
 });

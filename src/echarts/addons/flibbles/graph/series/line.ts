@@ -1,4 +1,4 @@
-export const name = "bar";
+export const name = "line";
 import { Shape2symbol } from '../utils.js';
 
 export function init(echarts): void { };
@@ -19,7 +19,7 @@ export function update(objects: GraphObjects): void {
 	const series = {};
 	const graph = objects.graph;
 	if (graph) {
-		series.type = "bar";
+		series.type = "line";
 	}
 	const data = createData(objects.nodes || {});
 	series.data = data;
