@@ -32,11 +32,13 @@ it('can manipulate node labels', function() {
 			A: {label: "match", value: 3},
 			B: {label: "match", value: 4},
 			C: {value: 2}}});
-	const data = adapter.testLast.series[0].data;
-	expect(data).toEqual([
-		{id: "A", value: 3, name: "match", label: {show: true, position: "bottom"}},
-		{id: "B", value: 4, name: "match", label: {show: true, position: "bottom"}},
+	const series = adapter.testLast.series[0];
+	expect(series.data).toEqual([
+		{id: "A", value: 3, name: "match", label: {show: true}},
+		{id: "B", value: 4, name: "match", label: {show: true}},
 		{id: "C", value: 2}]);
+	// This tells ECharts to use a node's name as its label
+	expect(series.label).toEqual({formatter: "{b}"});
 });
 
 /*** Axes ***/
