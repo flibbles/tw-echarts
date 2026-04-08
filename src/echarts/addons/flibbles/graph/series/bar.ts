@@ -10,6 +10,12 @@ export function defaultConfig(axes) {
 		if (axes[id].type) {
 			axis.type = axes[id].type;
 		}
+		if (axes[id].categories) {
+			axis.data = axes[id].categories;
+			if (!axis.type) {
+				axis.type = "category";
+			}
+		}
 		objects[id + "Axis"] = axis;
 	}
 	return objects;

@@ -27,7 +27,8 @@ export const properties = {
 		blur: {type: "actions", nonECharts: true}
 	},
 	axes: {
-		type: {type: "enum", values: ["value", "category", "time", "log"]}
+		type: {type: "enum", values: ["value", "category", "time", "log"]},
+		categories: {type: "filter"}
 	},
 	nodes: {
 		x: {type: "number"},

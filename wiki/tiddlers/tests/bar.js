@@ -48,8 +48,31 @@ it('can select category axes', function() {
 		graph: {type: "bar"},
 		axes: {x: {type: "category"}}
 	});
-	const options = adapter.testLast;
+	var options = adapter.testLast;
 	expect(options.xAxis).toEqual({type: "category"});
+	adapter.update({ axes: {x: {type: "category", categories: ["a","b","c"]}}});
+	options = adapter.testLast;
+	expect(options.xAxis).toEqual({type: "category", data: ["a","b","c"]});
+});
+
+it('can imply category axes', function() {
+	const adapter = new $tw.test.GraphEngine({
+		graph: {type: "bar"},
+		axes: {x: {}}
+	});
+	var options = adapter.testLast;
+	expect(options.xAxis).toEqual({});
+	adapter.update({ axes: {x: {categories: ["a","b","c"]}}});
+	options = adapter.testLast;
+	expect(options.xAxis).toEqual({type: "category", data: ["a","b","c"]});
+});
+
+it('can select other type despite categories', function() {
+	const adapter = new $tw.test.GraphEngine({
+		graph: {type: "bar"},
+		axes: {x: {type: "value", categories: ["a"]}}
+	});
+	expect(adapter.testLast.xAxis).toEqual({type: "value", data: ["a"]});
 });
 
 });
